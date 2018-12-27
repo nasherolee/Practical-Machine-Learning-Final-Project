@@ -1,0 +1,211 @@
+# Practical Machine Learning Final Project
+
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+
+
+## Abstract
+The goal of the project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. I will split the initial training set into 80% as a training dataset and 20% as validation dataset. Then a classification tree model, random forest model and gradient boosting method will be introduced to do analyses and predictions. After comparing the confusion matrices and accuaracies of these three models, I will choose the random forest model as the best model to predict the test data. 
+
+
+
+
+## Load the Packages
+```{r}
+library(caret)
+library(randomForest)
+library(rpart)
+library(gbm)
+```
+
+
+
+
+## Load the Initial Training Data and Test Data
+```{r}
+initial_train <- read.csv("C:/Users/puddi_000/Documents/Fall 2016 Ph.D/UWM/John Hopkins Coursera/pml-training.csv")
+initial_test <- read.csv("C:/Users/puddi_000/Documents/Fall 2016 Ph.D/UWM/John Hopkins Coursera/pml-testing.csv")
+```
+
+
+
+
+## Data Cleaning
+Since we can see that there're a lot of missing values in both datasets, we remove the columns (variables) which contain missing values before we build a model.
+```{r}
+training <- initial_train[, colSums(is.na(initial_train)) == 0]
+testing <- initial_test[, colSums(is.na(initial_test)) == 0]
+```
+
+
+
+Also, we can see that the first seven variables which are not related to the "classe", so we also remove these seven variables.
+```{r}
+training <- training[, -c(1:7)]
+testing <- testing[, -c(1:7)]
+```
+
+
+
+Now, we can check how many observations and variables left after cleaning.
+```{r}
+dim(training)
+dim(testing)
+```
+There're 19622 observations and 86 variables left in the training data. There're 20 observations and 53 variables left in the test data.
+
+
+
+
+## Data Splitting
+Next, we split the training data into 80% as training data and 20% as validation data.
+```{r}
+set.seed(123)
+inTrain <- createDataPartition(training$classe, p = 0.8, list = FALSE)
+traindata <- data.frame(training[inTrain, ])
+validdata <- data.frame(training[-inTrain, ])
+```
+
+
+```{r}
+dim(traindata)
+dim(validdata)
+```
+After splitting the training data into a new training dataset and validation dataset, we can see there're 15699 observations and 86 variables in the new training dataset, and 3923 observations and 86 variables in the validation dataset.
+
+
+
+
+## Data Exploration
+(a) Now, we are going to remove the variables which are near-zero-variance so that we can avoid constant and almost constant variables.
+```{r}
+nzv <- nearZeroVar(traindata)
+traindata <- traindata[, -nzv]
+validdata <- validdata[, -nzv]
+dim(traindata)
+dim(validdata)
+```
+So now we have 53 variables left in both training data and validation data.
+
+
+
+(b) The correlation matrix can help us to see how many highly correlated variables.
+```{r}
+M <- abs(cor(traindata[, -53]))
+diag(M) <- 0
+which(M > 0.8, arr.ind = T)
+```
+The above result shows that there're many variables are highly correlated with some other variables. In order to reduce the correlated variables, we are going to apply Principal component Analysis (PCA) to the data. 
+
+
+
+(c) Thus, we are going to calculate the principal components of the training data and validation data.
+```{r}
+preProc <- preProcess(traindata[, -53], method = "pca", thresh = 0.8)
+trainPC <- predict(preProc, traindata[, -53])
+validPC <- predict(preProc, validdata[, -53])
+```
+
+
+
+Now, we combine the principal components in traindata and the "classe" variable together as a new training data. We are going to use this new training data to build models.
+```{r}
+newtrain <- data.frame(classe_train = traindata$classe,  trainPC)
+```
+
+Similarly, we combine the principal components in validdata and the "classe" variable together as a new validation data. We are going to use this new validation data to predeict.
+```{r}
+newvalid <- data.frame(classe_valid = validdata$classe, validPC)
+```
+
+
+
+
+## Model Selection
+### Model 1: Classification Tree Model
+```{r}
+set.seed(321)
+cartcontrol <- trainControl(method = "cv", number = 5)
+cart_mod <- train(classe_train ~ ., data = newtrain, method = "rpart", trControl = cartcontrol)
+print(cart_mod)
+```
+
+
+
+(a) Then we plot the classification tree to see how the model decides the "classe" variable.
+```{r}
+plot(cart_mod$finalModel, uniform = TRUE, main = "Classification Tree")
+text(cart_mod$finalModel, use.n = TRUE, all = TRUE, cex = .8)
+```
+
+
+
+(b) Then we use the classfication model to predict the validation data.Here're the results of the prediction.
+```{r}
+cart_pred <- predict(cart_mod, newdata = newvalid)
+confusionMatrix(validdata$classe, cart_pred)
+```
+From the confusion matrix, we can see there're many wrong classifications in all "classe" levels. Also, we can see that the accuracy is only about 0.36, which is very low. Actually, this model only can classify "Classe A", "Classe B" and "Classe E". So we are going to see if there is a better model for the data.
+
+
+
+
+### Model 2: Random Forest Model
+```{r}
+rf_mod <- randomForest(classe_train ~ ., data = newtrain)
+print(rf_mod)
+```
+
+
+
+We use this random forest model to predict the validation data. Here're the results of the prediction.
+```{r}
+rf_pred <- predict(rf_mod, newdata = newvalid)
+confusionMatrix(validdata$classe, rf_pred)
+```
+From the confusion matrix, we can see there're much more correct classifications than wrong classifications in all "classe" levels. Also, we can see that the accuracy is about 0.97, which is pretty good and much higher than the accuracy of the classification model. So the random forest model probably is the optimal method for the data. We can also check one more model to see if there is a better model than this one.
+
+
+
+
+### Model 3: Gradient Boosted Model (GBM)
+```{r}
+set.seed(12345)
+gbmcontrol <- trainControl(method = "cv", number = 5)
+gbm_mod <- train(classe_train ~ ., data = newtrain, method = "gbm", trControl = gbmcontrol, verbose = FALSE)
+```
+
+
+```{r}
+print(gbm_mod)
+```
+
+
+
+We use this GBM model to predict the validation data. Here're the results of the prediction.
+```{r}
+gbm_pred <- predict(gbm_mod, newdata = newvalid)
+confusionMatrix(validdata$classe, gbm_pred)
+```
+From the confusion matrix, we can see "Classe A" is not classified very well. Also, we can see that the accuracy is around 0.74, which is lower than the accuracy of the random forest model. 
+Thus, we are going to choose the random forest model as the best model for the data.
+
+
+
+
+## Conclusion
+Now we are going to apply the random forest model to the test data. But before we do that, we need to calculate the principal components of the test data first. We do this because the random forest model is based on the new training data which was tranformed by PCA.
+```{r}
+testPC <- predict(preProc, testing[, -53])
+```
+
+
+
+Then we can use the model to predict the "Classe" variable with the test data.
+```{r}
+test_pred <- predict(rf_mod, newdata = testPC)
+test_pred
+```
+The above result is the prediction of the 20 test cases.
