@@ -3,28 +3,19 @@
 
 ## Background
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity
-
 relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements
-
 about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing
-
 that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this
-
 project, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell
-
 lifts correctly and incorrectly in 5 different ways. More information is available from the website here:
-
 http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
 
 
 ## Abstract
 The goal of the project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set.
-
 I will split the initial training set into 80% as a training dataset and 20% as validation dataset. Then a classification tree model,
-
 random forest model and gradient boosting method will be introduced to do analyses and predictions. After comparing the confusion matrices
-
 and accuaracies of these three models, I will choose the random forest model as the best model to predict the test data. 
 
 
@@ -94,7 +85,6 @@ dim(traindata)
 dim(validdata)
 ```
 After splitting the training data into a new training dataset and validation dataset, we can see there're 15699 observations
-
 and 86 variables in the new training dataset, and 3923 observations and 86 variables in the validation dataset.
 
 
@@ -120,7 +110,6 @@ diag(M) <- 0
 which(M > 0.8, arr.ind = T)
 ```
 The above result shows that there're many variables are highly correlated with some other variables. In order to reduce
-
 the correlated variables, we are going to apply Principal component Analysis (PCA) to the data. 
 
 
@@ -135,14 +124,12 @@ validPC <- predict(preProc, validdata[, -53])
 
 
 Now, we combine the principal components in traindata and the "classe" variable together as a new training data.
-
 We are going to use this new training data to build models.
 ```{r}
 newtrain <- data.frame(classe_train = traindata$classe,  trainPC)
 ```
 
 Similarly, we combine the principal components in validdata and the "classe" variable together as a new validation data.
-
 We are going to use this new validation data to predeict.
 ```{r}
 newvalid <- data.frame(classe_valid = validdata$classe, validPC)
@@ -176,9 +163,7 @@ cart_pred <- predict(cart_mod, newdata = newvalid)
 confusionMatrix(validdata$classe, cart_pred)
 ```
 From the confusion matrix, we can see there're many wrong classifications in all "classe" levels.
-
 Also, we can see that the accuracy is only about 0.36, which is very low. Actually, this model only can classify
-
 "Classe A", "Classe B" and "Classe E". So we are going to see if there is a better model for the data.
 
 
@@ -198,11 +183,8 @@ rf_pred <- predict(rf_mod, newdata = newvalid)
 confusionMatrix(validdata$classe, rf_pred)
 ```
 From the confusion matrix, we can see there're much more correct classifications than wrong classifications in all "classe" levels.
-
 Also, we can see that the accuracy is about 0.97, which is pretty good and much higher than the accuracy of the classification model.
-
 So the random forest model probably is the optimal method for the data. We can also check one more model to see if there is
-
 a better model than this one.
 
 
@@ -228,9 +210,7 @@ gbm_pred <- predict(gbm_mod, newdata = newvalid)
 confusionMatrix(validdata$classe, gbm_pred)
 ```
 From the confusion matrix, we can see "Classe A" is not classified very well. Also, we can see that the accuracy is around 0.74,
-
 which is lower than the accuracy of the random forest model.
-
 
 Thus, we are going to choose the random forest model as the best model for the data.
 
@@ -239,7 +219,6 @@ Thus, we are going to choose the random forest model as the best model for the d
 
 ## Conclusion
 Now we are going to apply the random forest model to the test data. But before we do that, we need to calculate the principal components of
-
 the test data first. We do this because the random forest model is based on the new training data which was tranformed by PCA.
 ```{r}
 testPC <- predict(preProc, testing[, -53])
