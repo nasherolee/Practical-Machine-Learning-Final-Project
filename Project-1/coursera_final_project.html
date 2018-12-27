@@ -125,11 +125,20 @@ $(document).ready(function () {
 <h1>Practical Machine Learning Final Project</h1>
 <div id="background" class="section level2">
 <h2>Background</h2>
-<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
+<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity</p>
+<p>relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements</p>
+<p>about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing</p>
+<p>that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this</p>
+<p>project, we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell</p>
+<p>lifts correctly and incorrectly in 5 different ways. More information is available from the website here:</p>
+<p><a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
 </div>
 <div id="abstract" class="section level2">
 <h2>Abstract</h2>
-<p>The goal of the project is to predict the manner in which they did the exercise. This is the “classe” variable in the training set. I will split the initial training set into 80% as a training dataset and 20% as validation dataset. Then a classification tree model, random forest model and gradient boosting method will be introduced to do analyses and predictions. After comparing the confusion matrices and accuaracies of these three models, I will choose the random forest model as the best model to predict the test data.</p>
+<p>The goal of the project is to predict the manner in which they did the exercise. This is the “classe” variable in the training set.</p>
+<p>I will split the initial training set into 80% as a training dataset and 20% as validation dataset. Then a classification tree model,</p>
+<p>random forest model and gradient boosting method will be introduced to do analyses and predictions. After comparing the confusion matrices</p>
+<p>and accuaracies of these three models, I will choose the random forest model as the best model to predict the test data.</p>
 </div>
 <div id="load-the-packages" class="section level2">
 <h2>Load the Packages</h2>
@@ -156,7 +165,8 @@ initial_test &lt;- read.csv(&quot;C:/Users/puddi_000/Documents/Fall 2016 Ph.D/UW
 </div>
 <div id="data-cleaning" class="section level2">
 <h2>Data Cleaning</h2>
-<p>Since we can see that there’re a lot of missing values in both datasets, we remove the columns (variables) which contain missing values before we build a model.</p>
+<p>Since we can see that there’re a lot of missing values in both datasets, we remove the columns (variables) which contain</p>
+<p>missing values before we build a model.</p>
 <pre class="r"><code>training &lt;- initial_train[, colSums(is.na(initial_train)) == 0]
 testing &lt;- initial_test[, colSums(is.na(initial_test)) == 0]</code></pre>
 <p>Also, we can see that the first seven variables which are not related to the “classe”, so we also remove these seven variables.</p>
@@ -180,7 +190,8 @@ validdata &lt;- data.frame(training[-inTrain, ])</code></pre>
 <pre><code>## [1] 15699    86</code></pre>
 <pre class="r"><code>dim(validdata)</code></pre>
 <pre><code>## [1] 3923   86</code></pre>
-<p>After splitting the training data into a new training dataset and validation dataset, we can see there’re 15699 observations and 86 variables in the new training dataset, and 3923 observations and 86 variables in the validation dataset.</p>
+<p>After splitting the training data into a new training dataset and validation dataset, we can see there’re 15699 observations</p>
+<p>and 86 variables in the new training dataset, and 3923 observations and 86 variables in the validation dataset.</p>
 </div>
 <div id="data-exploration" class="section level2">
 <h2>Data Exploration</h2>
@@ -242,16 +253,19 @@ which(M &gt; 0.8, arr.ind = T)</code></pre>
 ## gyros_dumbbell_x  31  46
 ## gyros_dumbbell_z  33  46
 ## gyros_forearm_y   45  46</code></pre>
-<p>The above result shows that there’re many variables are highly correlated with some other variables. In order to reduce the correlated variables, we are going to apply Principal component Analysis (PCA) to the data.</p>
+<p>The above result shows that there’re many variables are highly correlated with some other variables. In order to reduce</p>
+<p>the correlated variables, we are going to apply Principal component Analysis (PCA) to the data.</p>
 <ol start="3" style="list-style-type: lower-alpha">
 <li>Thus, we are going to calculate the principal components of the training data and validation data.</li>
 </ol>
 <pre class="r"><code>preProc &lt;- preProcess(traindata[, -53], method = &quot;pca&quot;, thresh = 0.8)
 trainPC &lt;- predict(preProc, traindata[, -53])
 validPC &lt;- predict(preProc, validdata[, -53])</code></pre>
-<p>Now, we combine the principal components in traindata and the “classe” variable together as a new training data. We are going to use this new training data to build models.</p>
+<p>Now, we combine the principal components in traindata and the “classe” variable together as a new training data.</p>
+<p>We are going to use this new training data to build models.</p>
 <pre class="r"><code>newtrain &lt;- data.frame(classe_train = traindata$classe,  trainPC)</code></pre>
-<p>Similarly, we combine the principal components in validdata and the “classe” variable together as a new validation data. We are going to use this new validation data to predeict.</p>
+<p>Similarly, we combine the principal components in validdata and the “classe” variable together as a new validation data.</p>
+<p>We are going to use this new validation data to predeict.</p>
 <pre class="r"><code>newvalid &lt;- data.frame(classe_valid = validdata$classe, validPC)</code></pre>
 </div>
 <div id="model-selection" class="section level2">
@@ -322,7 +336,9 @@ confusionMatrix(validdata$classe, cart_pred)</code></pre>
 ## Detection Rate         0.2065  0.09177   0.0000   0.0000  0.05761
 ## Detection Prevalence   0.2845  0.19347   0.1744   0.1639  0.18379
 ## Balanced Accuracy      0.6254  0.54706       NA       NA  0.64458</code></pre>
-<p>From the confusion matrix, we can see there’re many wrong classifications in all “classe” levels. Also, we can see that the accuracy is only about 0.36, which is very low. Actually, this model only can classify “Classe A”, “Classe B” and “Classe E”. So we are going to see if there is a better model for the data.</p>
+<p>From the confusion matrix, we can see there’re many wrong classifications in all “classe” levels.</p>
+<p>Also, we can see that the accuracy is only about 0.36, which is very low. Actually, this model only can classify</p>
+<p>“Classe A”, “Classe B” and “Classe E”. So we are going to see if there is a better model for the data.</p>
 </div>
 <div id="model-2-random-forest-model" class="section level3">
 <h3>Model 2: Random Forest Model</h3>
@@ -377,7 +393,10 @@ confusionMatrix(validdata$classe, rf_pred)</code></pre>
 ## Detection Rate         0.2763   0.1866   0.1677   0.1540   0.1815
 ## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
 ## Balanced Accuracy      0.9813   0.9786   0.9633   0.9765   0.9917</code></pre>
-<p>From the confusion matrix, we can see there’re much more correct classifications than wrong classifications in all “classe” levels. Also, we can see that the accuracy is about 0.97, which is pretty good and much higher than the accuracy of the classification model. So the random forest model probably is the optimal method for the data. We can also check one more model to see if there is a better model than this one.</p>
+<p>From the confusion matrix, we can see there’re much more correct classifications than wrong classifications in all “classe” levels.</p>
+<p>Also, we can see that the accuracy is about 0.97, which is pretty good and much higher than the accuracy of the classification model.</p>
+<p>So the random forest model probably is the optimal method for the data. We can also check one more model to see if there is</p>
+<p>a better model than this one.</p>
 </div>
 <div id="model-3-gradient-boosted-model-gbm" class="section level3">
 <h3>Model 3: Gradient Boosted Model (GBM)</h3>
@@ -447,12 +466,15 @@ confusionMatrix(validdata$classe, gbm_pred)</code></pre>
 ## Detection Rate         0.2330   0.1303   0.1303   0.1218   0.1331
 ## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
 ## Balanced Accuracy      0.8498   0.8341   0.7901   0.8561   0.8881</code></pre>
-<p>From the confusion matrix, we can see “Classe A” is not classified very well. Also, we can see that the accuracy is around 0.74, which is lower than the accuracy of the random forest model. Thus, we are going to choose the random forest model as the best model for the data.</p>
+<p>From the confusion matrix, we can see “Classe A” is not classified very well. Also, we can see that the accuracy is around 0.74,</p>
+<p>which is lower than the accuracy of the random forest model.</p>
+<p>Thus, we are going to choose the random forest model as the best model for the data.</p>
 </div>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>Now we are going to apply the random forest model to the test data. But before we do that, we need to calculate the principal components of the test data first. We do this because the random forest model is based on the new training data which was tranformed by PCA.</p>
+<p>Now we are going to apply the random forest model to the test data. But before we do that, we need to calculate the principal components of</p>
+<p>the test data first. We do this because the random forest model is based on the new training data which was tranformed by PCA.</p>
 <pre class="r"><code>testPC &lt;- predict(preProc, testing[, -53])</code></pre>
 <p>Then we can use the model to predict the “Classe” variable with the test data.</p>
 <pre class="r"><code>test_pred &lt;- predict(rf_mod, newdata = testPC)
